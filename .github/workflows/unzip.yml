@@ -1,0 +1,44 @@
+name: Unzip Warung
+
+on:
+  push:
+    paths:
+      - 'warung.zip'
+  workflow_dispatch:
+
+jobs:
+  unzip:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Unzip warung.zip
+        run: |
+          if [ -f warung.zip ]; then
+            unzip -o warung.zip
+            rm warung.zip
+            echo "Berhasil ekstrak."
+          else
+            echo "warung.zip tidak ditemukan."
+            exit 1
+          fi
+
+      - name: Pindahkan isi folder ke root (jika perlu)
+        run: |
+          if [ -d warung_simulator ]; then
+            mv warung_simulator/* . 2>/dev/null || true
+            mv warung_simulator/.* . 2>/dev/null || true
+            rmdir warung_simulator 2>/dev/null || true
+          fi
+          ls -la
+
+      - name: Commit & Push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --staged --quiet || git commit -m "Auto-unzip warung.zip"
+          git push
